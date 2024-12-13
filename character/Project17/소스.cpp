@@ -18,6 +18,19 @@
 #include <string.h>
 #include <string>
 #include "aabb.h"
+#include "file_open.h"
+#include "map_tile.h"
+
+#define green_color glm::vec3(0.0f, 1.0f, 0.0f)
+#define blue_color glm::vec3(0.0f, 0.0f, 1.0f)
+#define sky_color glm::vec3(0.0f, 0.5f, 1.0f)
+#define purple_color glm::vec3(1.0f, 0.0f, 1.0f)
+#define brown_color glm::vec3(0.5f, 0.3f, 0.0f)
+#define gray_color glm::vec3(0.5f, 0.5f, 0.5f)
+#define white_color glm::vec3(1.0f, 1.0f, 1.0f)
+#define red_color glm::vec3(1.0f, 0.0f, 0.0f)
+#define yellow_color glm::vec3(1.0f, 1.0f, 0.0f)
+
 
 using namespace std;
 
@@ -309,6 +322,12 @@ aabb make_aabb_charactor(const vector<glm::vec3>& vertices) {
 
 	return temp;
 }
+bool aabb_collision(const aabb& a, const aabb& b) {
+	if (a.max_x >= b.min_x && a.min_x <= b.max_x &&
+		a.max_y >= b.min_y && a.min_y <= b.max_y &&
+		a.max_z >= b.min_z && a.min_z <= b.max_z) return true;
+	return false;
+}
 
 GLint width, height;
 GLuint shaderProgramID;
@@ -354,7 +373,9 @@ static int swingAngle = 0;
 // 카메라
 glm::mat4 view = glm::mat4(1.0f);
 
-
+MapTile map1[] = {
+	MapTile(0.0f, 0.0f, 0.0f, "cube1.obj", "floor", green_color),
+};
 
 void init() {
 	glClearColor(backgroundColor.R, backgroundColor.G, backgroundColor.B, backgroundColor.A);
@@ -386,6 +407,10 @@ void init() {
 	*part = returnHexahedron(glm::vec3(0.075, -0.3, 0.0), 0.05, 0.3, 0.05, returnColorRand8());
 	character.push_back(*part);
 
+	for (int i = 0; i < character.size(); i++) {
+		move(character[i], glm::vec3(0.0, 0.0, 2.0));
+	}
+
 	boxForCollision = returnHexahedron(glm::vec3(0.0, -0.1, 0.0), 0.4, 0.7, 0.1, returnColorRand8());
 
 	delete(part);
@@ -394,6 +419,11 @@ void init() {
 	camera[1] = character[1].center;
 	camera[2] = glm::vec3(0.0f, 1.0f, 0.0f);
 	view = glm::lookAt(camera[0], camera[1], camera[2]);
+
+	for (MapTile& map : map1) {
+		map.gen_buffer();
+
+	}
 
 	glEnable(GL_DEPTH_TEST);
 }
@@ -462,6 +492,16 @@ GLvoid drawScene() {
 	draw(character);
 	//aabb박스 그리기, 디버그용
 	drawWireframe(boxForCollision);
+
+	GLuint trans_mat = glGetUniformLocation(shaderProgramID, "trans");
+	GLuint color = glGetUniformLocation(shaderProgramID, "in_color");
+
+	for (MapTile w : map1) {
+		glBindVertexArray(w.VAO);
+		glUniform3fv(color, 1, glm::value_ptr(w.color));
+		glUniformMatrix4fv(trans_mat, 1, GL_FALSE, glm::value_ptr(w.trans));
+		glDrawArrays(GL_TRIANGLES, 0, w.model.vertices.size());
+	}
 
 	glutSwapBuffers();
 }
@@ -544,13 +584,15 @@ void motion(int x, int y) {
 }
 
 void TimerFunction(int value) {
-
+	glm::vec3 headDirection = -getHeadDirection(character[1]);
 	// 캐릭터의 64개 정점을 모두 모아서 aabb박스를 계산
 	vector<glm::vec3> vertices(0);
 	for (const auto& d : character) {
 		vertices.insert(vertices.end(), d.currentPosition.begin(), d.currentPosition.end());
 	}
 	aabb aabbCharacter = make_aabb_charactor(vertices);
+
+	
 
 	// aabb박스 그리기용 정육면체
 	boxForCollision = returnHexahedron(glm::vec3(aabbCharacter.min_x + (aabbCharacter.max_x - aabbCharacter.min_x) / 2.0,
@@ -561,39 +603,13 @@ void TimerFunction(int value) {
 		aabbCharacter.max_z - aabbCharacter.min_z,
 		returnColorRand8());
 
-	if (turnL == true) {
-		rotateByCenter(character[1], glm::vec3(0.0, 1.0, 0.0), 3.0);
-		rotateByCenter(character[0], glm::vec3(0.0, 1.0, 0.0), 3.0);
-		moveAndRotate(character[2], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[2].center, 3.0);
-		moveAndRotate(character[3], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[3].center, 3.0);
-		moveAndRotate(character[4], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[4].center, 3.0);
-		moveAndRotate(character[5], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[5].center, 3.0);
-		moveAndRotate(character[6], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[6].center, 3.0);
-		moveAndRotate(character[7], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[7].center, 3.0);
-	}
-	if (turnR == true) {
-		rotateByCenter(character[1], glm::vec3(0.0, 1.0, 0.0), -3.0);
-		rotateByCenter(character[0], glm::vec3(0.0, 1.0, 0.0), -3.0);
-		moveAndRotate(character[2], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[2].center, -3.0);
-		moveAndRotate(character[3], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[3].center, -3.0);
-		moveAndRotate(character[4], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[4].center, -3.0);
-		moveAndRotate(character[5], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[5].center, -3.0);
-		moveAndRotate(character[6], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[6].center, -3.0);
-		moveAndRotate(character[7], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[7].center, -3.0);
-	}
-	if (jumpSpeed > 0) {
-		for (auto& d : character) {
-			move(d, glm::vec3(0.0, jumpSpeed/10.0, 0.0));
-		}
-		//jumpSpeed = 0;
-	}
+	
+	
 	if (w == true) {
-		glm::vec3 headDirection = -getHeadDirection(character[1]);
 
 		for (auto& d : character) {
 			move(d, headDirection * 0.02f);
 		}
-		move(boxForCollision, headDirection * 0.02f);
 
 		if (swingLimbs) {
 			// 왼팔 흔들기
@@ -633,7 +649,40 @@ void TimerFunction(int value) {
 			if (--swingAngle < -15) swingLimbs = true;
 		}
 	}
+	if (aabb_collision(aabbCharacter, map1->get_aabb())) {
+		for (auto& d : character) {
+			move(d, -headDirection * 0.02f);
+		}
+		glutTimerFunc(10, TimerFunction, 0);
+		return;
+	}
+	if (turnL == true) {
+		rotateByCenter(character[1], glm::vec3(0.0, 1.0, 0.0), 3.0);
+		rotateByCenter(character[0], glm::vec3(0.0, 1.0, 0.0), 3.0);
+		moveAndRotate(character[2], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[2].center, 3.0);
+		moveAndRotate(character[3], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[3].center, 3.0);
+		moveAndRotate(character[4], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[4].center, 3.0);
+		moveAndRotate(character[5], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[5].center, 3.0);
+		moveAndRotate(character[6], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[6].center, 3.0);
+		moveAndRotate(character[7], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[7].center, 3.0);
+	}
+	if (turnR == true) {
+		rotateByCenter(character[1], glm::vec3(0.0, 1.0, 0.0), -3.0);
+		rotateByCenter(character[0], glm::vec3(0.0, 1.0, 0.0), -3.0);
+		moveAndRotate(character[2], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[2].center, -3.0);
+		moveAndRotate(character[3], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[3].center, -3.0);
+		moveAndRotate(character[4], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[4].center, -3.0);
+		moveAndRotate(character[5], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[5].center, -3.0);
+		moveAndRotate(character[6], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[6].center, -3.0);
+		moveAndRotate(character[7], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[7].center, -3.0);
+	}
 
+	// 점프
+	if (jumpSpeed > 0) {
+		for (auto& d : character) {
+			move(d, glm::vec3(0.0, jumpSpeed / 10.0, 0.0));
+		}
+	}
 	// 중력 적용
 	jumpSpeed -= a / 10.0;
 	// 발판에 닿아있지 않으면 계속 아래로 내려감

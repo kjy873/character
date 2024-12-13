@@ -29,9 +29,27 @@
     <ClCompile Include="aabb.cpp">
       <Filter>헤더 파일</Filter>
     </ClCompile>
+    <ClCompile Include="file_open.cpp">
+      <Filter>헤더 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="map_tile.cpp">
+      <Filter>헤더 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="read_obj.cpp">
+      <Filter>헤더 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aabb.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="file_open.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="map_tile.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="read_obj.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

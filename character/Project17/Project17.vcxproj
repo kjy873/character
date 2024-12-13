@@ -133,10 +133,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aabb.cpp" />
+    <ClCompile Include="file_open.cpp" />
+    <ClCompile Include="map_tile.cpp" />
+    <ClCompile Include="read_obj.cpp" />
     <ClCompile Include="소스.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aabb.h" />
+    <ClInclude Include="file_open.h" />
+    <ClInclude Include="map_tile.h" />
+    <ClInclude Include="read_obj.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
