@@ -20,6 +20,9 @@
 
 using namespace std;
 
+bool w = false;
+bool s = false;
+
 //º¯¼ö
 float windowWidth = 800;
 float windowHeight = 600;
@@ -79,6 +82,7 @@ void idleScene();
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
 GLvoid Keyboard(unsigned char key, int x, int y);
+GLvoid KeyboardUp(unsigned char key, int x, int y);
 void KeyboardSpecial(int key, int x, int y);
 void TimerFunction(int value);
 void mouse(int button, int state, int x, int y);
@@ -280,8 +284,10 @@ void main(int argc, char** argv) {
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(Reshape);
 	glutKeyboardFunc(Keyboard);
+	glutKeyboardUpFunc(KeyboardUp);
 	glutSpecialFunc(KeyboardSpecial);
 	glutMouseFunc(mouse);
+	glutTimerFunc(100, TimerFunction, 0);
 	glutMainLoop();
 }
 
@@ -405,6 +411,72 @@ GLvoid Reshape(int w, int h) {
 GLvoid Keyboard(unsigned char key, int x, int y) {
 	switch (key) {
 	case 'w':
+		w = true;
+		break;
+	case 'q':
+		glutLeaveMainLoop();
+		break;
+	}
+	glutPostRedisplay();
+}
+
+GLvoid KeyboardUp(unsigned char key, int x, int y) {
+	switch (key) {
+	case 'w':
+		w = false;
+		break;
+	}
+	glutPostRedisplay();
+}
+
+void KeyboardSpecial(int key, int x, int y) {
+	switch (key) {
+	case GLUT_KEY_UP:
+		break;
+	case GLUT_KEY_DOWN:
+		break;
+	case GLUT_KEY_LEFT:
+		// ¸ö È¸Àü
+		rotateByCenter(character[1], glm::vec3(0.0, 1.0, 0.0), 3.0);
+		rotateByCenter(character[0], glm::vec3(0.0, 1.0, 0.0), 3.0);
+		moveAndRotate(character[2], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[2].center, 3.0);
+		moveAndRotate(character[3], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[3].center, 3.0);
+		moveAndRotate(character[4], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[4].center, 3.0);
+		moveAndRotate(character[5], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[5].center, 3.0);
+		moveAndRotate(character[6], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[6].center, 3.0);
+		moveAndRotate(character[7], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[7].center, 3.0);
+		break;
+	case GLUT_KEY_RIGHT:
+		rotateByCenter(character[1], glm::vec3(0.0, 1.0, 0.0), -3.0);
+		rotateByCenter(character[0], glm::vec3(0.0, 1.0, 0.0), -3.0);
+		moveAndRotate(character[2], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[2].center, -3.0);
+		moveAndRotate(character[3], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[3].center, -3.0);
+		moveAndRotate(character[4], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[4].center, -3.0);
+		moveAndRotate(character[5], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[5].center, -3.0);
+		moveAndRotate(character[6], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[6].center, -3.0);
+		moveAndRotate(character[7], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[7].center, -3.0);
+		break;
+	}
+	glutPostRedisplay();
+}
+
+void mouse(int button, int state, int x, int y) {
+	mgl = transformMouseToGL(x, y);
+
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && state) {
+		
+	}
+	glutPostRedisplay();
+}
+
+void motion(int x, int y) {
+
+
+	glutPostRedisplay();
+}
+
+void TimerFunction(int value) {
+	if (w == true) {
 		glm::vec3 headDirection = -getHeadDirection(character[1]);
 
 		for (auto& d : character) {
@@ -448,66 +520,9 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 
 			if (--swingAngle < -15) swingLimbs = true;
 		}
-
-		break;
-	case 'q':
-		glutLeaveMainLoop();
-		break;
-
 	}
-	glutPostRedisplay();
-}
-
-void KeyboardSpecial(int key, int x, int y) {
-	switch (key) {
-	case GLUT_KEY_UP:
-		break;
-	case GLUT_KEY_DOWN:
-		break;
-	case GLUT_KEY_LEFT:
-		// ¸ö È¸Àü
-		rotateByCenter(character[1], glm::vec3(0.0, 1.0, 0.0), 3.0);
-		rotateByCenter(character[0], glm::vec3(0.0, 1.0, 0.0), 3.0);
-		moveAndRotate(character[2], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[2].center, 3.0);
-		moveAndRotate(character[3], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[3].center, 3.0);
-		moveAndRotate(character[4], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[4].center, 3.0);
-		moveAndRotate(character[5], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[5].center, 3.0);
-		moveAndRotate(character[6], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[6].center, 3.0);
-		moveAndRotate(character[7], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[7].center, 3.0);
-
-		
-
-		break;
-	case GLUT_KEY_RIGHT:
-		rotateByCenter(character[1], glm::vec3(0.0, 1.0, 0.0), -3.0);
-		rotateByCenter(character[0], glm::vec3(0.0, 1.0, 0.0), -3.0);
-		moveAndRotate(character[2], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[2].center, -3.0);
-		moveAndRotate(character[3], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[3].center, -3.0);
-		moveAndRotate(character[4], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[4].center, -3.0);
-		moveAndRotate(character[5], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[5].center, -3.0);
-		moveAndRotate(character[6], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[6].center, -3.0);
-		moveAndRotate(character[7], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[7].center, -3.0);
-		break;
-	}
-	glutPostRedisplay();
-}
-
-void mouse(int button, int state, int x, int y) {
-	mgl = transformMouseToGL(x, y);
-
-	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && state) {
-		
-	}
-	glutPostRedisplay();
-}
-
-void motion(int x, int y) {
-
-
-	glutPostRedisplay();
-}
-
-void TimerFunction(int value) {
+	
+	glutTimerFunc(10, TimerFunction, 0);
 	glutPostRedisplay();
 }
 
