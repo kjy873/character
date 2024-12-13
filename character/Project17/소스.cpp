@@ -17,11 +17,15 @@
 #include <sstream>
 #include <string.h>
 #include <string>
+#include "aabb.h"
 
 using namespace std;
 
+float a = 0.1; // 중력가속도
 bool w = false;
-bool s = false;
+bool turnL = false;
+bool turnR = false;
+float jumpSpeed = 0.0;
 
 //변수
 float windowWidth = 800;
@@ -59,7 +63,7 @@ glm::vec3* returnColorRand2() {
 }
 glm::vec3* returnColorRand8() {
 	glm::vec3 color[8];
-	for(int i = 0;i <8; i++) color[i] = glm::vec3((float)(rand() % 256 + 1) / 255, (float)(rand() % 256 + 1) / 255, (float)(rand() % 256 + 1) / 255);
+	for (int i = 0; i < 8; i++) color[i] = glm::vec3((float)(rand() % 256 + 1) / 255, (float)(rand() % 256 + 1) / 255, (float)(rand() % 256 + 1) / 255);
 	return color;
 }
 COLOR backgroundColor;
@@ -84,6 +88,7 @@ GLvoid Reshape(int w, int h);
 GLvoid Keyboard(unsigned char key, int x, int y);
 GLvoid KeyboardUp(unsigned char key, int x, int y);
 void KeyboardSpecial(int key, int x, int y);
+void KeyboardSpecialUp(int key, int x, int y);
 void TimerFunction(int value);
 void mouse(int button, int state, int x, int y);
 void init();
@@ -107,8 +112,9 @@ struct diagram {
 	GLuint VAO{ NULL };												// VAO
 	glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f);					// 중심 좌표	
 	float radius = defaultSize;										// 반지름
-	glm::vec3 initialPosition = glm::vec3(0.0f, 0.0f, 0.0f);		// 초기 위치(중심)
+	glm::vec3 initialCenter = glm::vec3(0.0f, 0.0f, 0.0f);		// 초기 위치(중심)
 	vector<glm::vec3> position;										// 정점 좌표 - 정점의 개수만큼 넣어놨음
+	vector<glm::vec3> currentPosition;								// aabb박스 계산용 변환 누적 위치(정점 좌표)
 	vector<glm::vec3> color;										// 정점 색상 - 정점의 개수만큼 넣어놨음
 	int vertices = 0;												// 정점 개수
 	bool polyhedron = false;										// 입체 도형 여부
@@ -122,6 +128,7 @@ struct diagram {
 	//평면 도형 생성자
 	diagram(int vertexCount) : vertices(vertexCount) {
 		position.resize(vertices);
+		currentPosition.resize(vertices);
 		color.resize(vertices);
 		if (vertices == 4) {
 			index.resize(6);
@@ -131,6 +138,7 @@ struct diagram {
 	// 입체 도형 생성자
 	diagram(int vertexCount, bool polyhedron) : vertices(vertexCount), polyhedron(polyhedron) {
 		position.resize(vertices);
+		currentPosition.resize(vertices);
 		color.resize(vertices);
 		setIndices();
 	}
@@ -181,7 +189,7 @@ diagram returnHexahedron(const glm::vec3 center, const float& width, const float
 	dst.width = width;
 	dst.height = height;
 	dst.depth = depth;
-	dst.initialPosition = glm::vec3(center);
+	dst.initialCenter = glm::vec3(center);
 	for (int i = 0; i < 8; i++) {
 		dst.color[i] = glm::vec3(c[i]);
 	}
@@ -194,6 +202,10 @@ diagram returnHexahedron(const glm::vec3 center, const float& width, const float
 	dst.position[6] = glm::vec3(dst.center.x + width / 2.0, dst.center.y + height / 2.0, dst.center.z - depth / 2.0);
 	dst.position[7] = glm::vec3(dst.center.x + width / 2.0, dst.center.y - height / 2.0, dst.center.z - depth / 2.0);
 
+	for (int i = 0; i < dst.currentPosition.size(); i++) {
+		dst.position[i] = glm::vec3(dst.position[i]);
+	}
+
 	InitBufferRectangle(dst.VAO, dst.position.data(), dst.position.size(),
 		dst.color.data(), dst.color.size(),
 		dst.index.data(), dst.index.size());
@@ -204,21 +216,24 @@ diagram returnHexahedron(const glm::vec3 center, const float& width, const float
 // 이동
 inline void move(diagram& dia, glm::vec3 delta) {
 	dia.TSR = glm::translate(glm::mat4(1.0f), delta) * dia.TSR;
-	dia.center = glm::vec3(dia.TSR * glm::vec4(dia.initialPosition, 1.0f));
+	dia.center = glm::vec3(dia.TSR * glm::vec4(dia.initialCenter, 1.0f));
+	for (int i = 0; i < dia.position.size(); i++) dia.currentPosition[i] = glm::vec3(dia.TSR * glm::vec4(dia.position[i], 1.0f));
 }
 // 자전
 inline void rotateByCenter(diagram& dia, glm::vec3 axis, const float& degree) {
 	dia.TSR = glm::translate(glm::mat4(1.0f), -dia.center) * dia.TSR;
 	dia.TSR = glm::rotate(glm::mat4(1.0f), glm::radians(degree), glm::normalize(axis)) * dia.TSR;
 	dia.TSR = glm::translate(glm::mat4(1.0f), dia.center) * dia.TSR;
-	dia.center = glm::vec3(dia.TSR * glm::vec4(dia.initialPosition, 1.0f));
+	dia.center = glm::vec3(dia.TSR * glm::vec4(dia.initialCenter, 1.0f));
+	for (int i = 0; i < dia.position.size(); i++) dia.currentPosition[i] = glm::vec3(dia.TSR * glm::vec4(dia.position[i], 1.0f));
 }
 // 공전
 inline void moveAndRotate(diagram& dia, glm::vec3 axis, glm::vec3 delta, const float& degree) {
 	dia.TSR = glm::translate(glm::mat4(1.0f), -(dia.center + delta)) * dia.TSR;
-	dia.TSR = glm::rotate(glm::mat4(1.0f), glm::radians(degree), glm::vec3(axis))  * dia.TSR;
+	dia.TSR = glm::rotate(glm::mat4(1.0f), glm::radians(degree), glm::vec3(axis)) * dia.TSR;
 	dia.TSR = glm::translate(glm::mat4(1.0f), dia.center + delta) * dia.TSR;
-	dia.center = glm::vec3(dia.TSR *glm::vec4(dia.initialPosition, 1.0f));
+	dia.center = glm::vec3(dia.TSR * glm::vec4(dia.initialCenter, 1.0f));
+	for (int i = 0; i < dia.position.size(); i++) dia.currentPosition[i] = glm::vec3(dia.TSR * glm::vec4(dia.position[i], 1.0f));
 }
 // 카메라 공전
 inline void moveAndRotateByMatrix(glm::mat4& TSR, glm::vec3 axis, glm::vec3 center, glm::vec3 moving, const float& degree) {
@@ -242,17 +257,57 @@ glm::vec3 getHeadDirection(const diagram& head) {
 	glm::vec3 vertex4 = glm::vec3(head.TSR * glm::vec4(head.position[5], 1.0f));
 
 	glm::vec3 direction = glm::normalize(glm::cross(vertex2 - vertex1, vertex4 - vertex3));
-	
+
 	return direction;
 }
 
 // head가 바라보는 반대 방향(머리 뒤)에 카메라 고정
 inline void setCameraToHead(glm::mat4& view, glm::vec3 camera[3], const diagram& target) {
 	glm::vec3 cameraDirection = target.center + getHeadDirection(target) / 10.0f;
-	cout << target.center.x << ", " << target.center.y << ", " << target.center.z << endl;
+	//cout << target.center.x << ", " << target.center.y << ", " << target.center.z << endl;
 	camera[0] = glm::vec3(cameraDirection.x, cameraDirection.y + 0.05, cameraDirection.z);
 	camera[1] = target.center;
 	view = glm::lookAt(camera[0], camera[1], camera[2]);
+}
+
+// 캐릭터의 aabb박스를 계산해 반환
+aabb make_aabb_charactor(const vector<glm::vec3>& vertices) {
+	aabb box;
+	float min_x = std::numeric_limits<float>::max();
+	float max_x = std::numeric_limits<float>::min();
+	float min_y = std::numeric_limits<float>::max();
+	float max_y = std::numeric_limits<float>::min();
+	float min_z = std::numeric_limits<float>::max();
+	float max_z = std::numeric_limits<float>::min();
+
+	min_x = vertices[0].x;
+	max_x = vertices[0].x;
+	min_y = vertices[0].y;
+	max_y = vertices[0].y;
+	min_z = vertices[0].z;
+	max_z = vertices[0].z;
+
+	for (const auto& v : vertices) {
+		min_x = std::min(min_x, v.x);
+		max_x = std::max(max_x, v.x);
+		min_y = std::min(min_y, v.y);
+		max_y = std::max(max_y, v.y);
+		min_z = std::min(min_z, v.z);
+		max_z = std::max(max_z, v.z);
+	}
+
+	aabb temp = {
+		min_x,
+		max_x,
+
+		min_y,
+		max_y,
+
+		min_z,
+		max_z,
+	};
+
+	return temp;
 }
 
 GLint width, height;
@@ -260,6 +315,7 @@ GLuint shaderProgramID;
 GLuint vertexShader;
 GLuint fragmentShader;
 vector <diagram> character;
+diagram boxForCollision(8);
 vector <diagram> axes;
 glm::vec3 camera[3];
 
@@ -286,6 +342,7 @@ void main(int argc, char** argv) {
 	glutKeyboardFunc(Keyboard);
 	glutKeyboardUpFunc(KeyboardUp);
 	glutSpecialFunc(KeyboardSpecial);
+	glutSpecialUpFunc(KeyboardSpecialUp);
 	glutMouseFunc(mouse);
 	glutTimerFunc(100, TimerFunction, 0);
 	glutMainLoop();
@@ -328,6 +385,8 @@ void init() {
 	character.push_back(*part);
 	*part = returnHexahedron(glm::vec3(0.075, -0.3, 0.0), 0.05, 0.3, 0.05, returnColorRand8());
 	character.push_back(*part);
+
+	boxForCollision = returnHexahedron(glm::vec3(0.0, -0.1, 0.0), 0.4, 0.7, 0.1, returnColorRand8());
 
 	delete(part);
 
@@ -385,11 +444,11 @@ inline void drawWireframe(const diagram& dia) {
 }
 
 GLvoid drawScene() {
-	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-	
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	draw(axes);
 	setCameraToHead(view, camera, character[1]);
-	
+
 	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "viewTransform");
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
 
@@ -398,8 +457,11 @@ GLvoid drawScene() {
 	projection = glm::translate(projection, glm::vec3(0.0, 0.0, -2.0));
 	unsigned int projectionLocation = glGetUniformLocation(shaderProgramID, "projectionTransform");
 	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
-  
+
+	//캐릭터
 	draw(character);
+	//aabb박스 그리기, 디버그용
+	drawWireframe(boxForCollision);
 
 	glutSwapBuffers();
 }
@@ -412,6 +474,9 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	switch (key) {
 	case 'w':
 		w = true;
+		break;
+	case ' ':  //점프
+		jumpSpeed = 0.2;
 		break;
 	case 'q':
 		glutLeaveMainLoop();
@@ -436,25 +501,27 @@ void KeyboardSpecial(int key, int x, int y) {
 	case GLUT_KEY_DOWN:
 		break;
 	case GLUT_KEY_LEFT:
-		// 몸 회전
-		rotateByCenter(character[1], glm::vec3(0.0, 1.0, 0.0), 3.0);
-		rotateByCenter(character[0], glm::vec3(0.0, 1.0, 0.0), 3.0);
-		moveAndRotate(character[2], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[2].center, 3.0);
-		moveAndRotate(character[3], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[3].center, 3.0);
-		moveAndRotate(character[4], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[4].center, 3.0);
-		moveAndRotate(character[5], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[5].center, 3.0);
-		moveAndRotate(character[6], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[6].center, 3.0);
-		moveAndRotate(character[7], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[7].center, 3.0);
+		turnL = true;
+
 		break;
 	case GLUT_KEY_RIGHT:
-		rotateByCenter(character[1], glm::vec3(0.0, 1.0, 0.0), -3.0);
-		rotateByCenter(character[0], glm::vec3(0.0, 1.0, 0.0), -3.0);
-		moveAndRotate(character[2], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[2].center, -3.0);
-		moveAndRotate(character[3], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[3].center, -3.0);
-		moveAndRotate(character[4], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[4].center, -3.0);
-		moveAndRotate(character[5], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[5].center, -3.0);
-		moveAndRotate(character[6], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[6].center, -3.0);
-		moveAndRotate(character[7], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[7].center, -3.0);
+		turnR = true;
+		break;
+	}
+	glutPostRedisplay();
+}
+
+void KeyboardSpecialUp(int key, int x, int y) {
+	switch (key) {
+	case GLUT_KEY_UP:
+		break;
+	case GLUT_KEY_DOWN:
+		break;
+	case GLUT_KEY_LEFT:
+		turnL = false;
+		break;
+	case GLUT_KEY_RIGHT:
+		turnR = false;
 		break;
 	}
 	glutPostRedisplay();
@@ -464,24 +531,69 @@ void mouse(int button, int state, int x, int y) {
 	mgl = transformMouseToGL(x, y);
 
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && state) {
-		
+		glutMotionFunc(motion);
 	}
 	glutPostRedisplay();
 }
 
 void motion(int x, int y) {
+	mgl = transformMouseToGL(x, y);
 
 
 	glutPostRedisplay();
 }
 
 void TimerFunction(int value) {
+
+	// 캐릭터의 64개 정점을 모두 모아서 aabb박스를 계산
+	vector<glm::vec3> vertices(0);
+	for (const auto& d : character) {
+		vertices.insert(vertices.end(), d.currentPosition.begin(), d.currentPosition.end());
+	}
+	aabb aabbCharacter = make_aabb_charactor(vertices);
+
+	// aabb박스 그리기용 정육면체
+	boxForCollision = returnHexahedron(glm::vec3(aabbCharacter.min_x + (aabbCharacter.max_x - aabbCharacter.min_x) / 2.0,
+		aabbCharacter.min_y + (aabbCharacter.max_y - aabbCharacter.min_y) / 2.0,
+		aabbCharacter.min_z + (aabbCharacter.max_z - aabbCharacter.min_z) / 2.0),
+		aabbCharacter.max_x - aabbCharacter.min_x,
+		aabbCharacter.max_y - aabbCharacter.min_y,
+		aabbCharacter.max_z - aabbCharacter.min_z,
+		returnColorRand8());
+
+	if (turnL == true) {
+		rotateByCenter(character[1], glm::vec3(0.0, 1.0, 0.0), 3.0);
+		rotateByCenter(character[0], glm::vec3(0.0, 1.0, 0.0), 3.0);
+		moveAndRotate(character[2], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[2].center, 3.0);
+		moveAndRotate(character[3], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[3].center, 3.0);
+		moveAndRotate(character[4], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[4].center, 3.0);
+		moveAndRotate(character[5], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[5].center, 3.0);
+		moveAndRotate(character[6], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[6].center, 3.0);
+		moveAndRotate(character[7], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[7].center, 3.0);
+	}
+	if (turnR == true) {
+		rotateByCenter(character[1], glm::vec3(0.0, 1.0, 0.0), -3.0);
+		rotateByCenter(character[0], glm::vec3(0.0, 1.0, 0.0), -3.0);
+		moveAndRotate(character[2], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[2].center, -3.0);
+		moveAndRotate(character[3], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[3].center, -3.0);
+		moveAndRotate(character[4], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[4].center, -3.0);
+		moveAndRotate(character[5], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[5].center, -3.0);
+		moveAndRotate(character[6], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[6].center, -3.0);
+		moveAndRotate(character[7], glm::vec3(0.0, 1.0, 0.0), character[0].center - character[7].center, -3.0);
+	}
+	if (jumpSpeed > 0) {
+		for (auto& d : character) {
+			move(d, glm::vec3(0.0, jumpSpeed/10.0, 0.0));
+		}
+		//jumpSpeed = 0;
+	}
 	if (w == true) {
 		glm::vec3 headDirection = -getHeadDirection(character[1]);
 
 		for (auto& d : character) {
 			move(d, headDirection * 0.02f);
 		}
+		move(boxForCollision, headDirection * 0.02f);
 
 		if (swingLimbs) {
 			// 왼팔 흔들기
@@ -521,7 +633,12 @@ void TimerFunction(int value) {
 			if (--swingAngle < -15) swingLimbs = true;
 		}
 	}
-	
+
+	// 중력 적용
+	jumpSpeed -= a / 10.0;
+	// 발판에 닿아있지 않으면 계속 아래로 내려감
+	// 
+	// 중력 적용
 	glutTimerFunc(10, TimerFunction, 0);
 	glutPostRedisplay();
 }
@@ -544,7 +661,7 @@ GLchar* filetobuf(const char* filepath)
 
 	std::string contents = buffer.str();
 	char* source = new char[contents.size() + 1];
-	strcpy_s(source, contents.size()+1, contents.c_str());
+	strcpy_s(source, contents.size() + 1, contents.c_str());
 	return source;
 }
 void make_vertexShaders(GLuint& vertexShader, const char* vertexName) {
