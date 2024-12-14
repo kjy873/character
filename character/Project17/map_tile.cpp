@@ -121,9 +121,11 @@ void MapTile::move_x() {
 	box.max_x += dx;
 	if (x < -max_dx) {
 		dx = -dx;
+		//std::cout << box << std::endl;
 	}
 	if (x > max_dx) {
 		dx = -dx;
+		//std::cout << box << std::endl;
 	}
 
 };
@@ -134,10 +136,14 @@ void MapTile::move_y() {
 	box.max_y += dy;
 	if (y < -max_dy) {
 		dy = -dy;
+		//std::cout << box << std::endl;
 	}
 	if (y > max_dy) {
 		dy = -dy;
+		//std::cout << box << std::endl;
 	}
+
+
 };
 
 void MapTile::move_z() {
@@ -146,8 +152,21 @@ void MapTile::move_z() {
 	box.max_z += dz;
 	if (z < -max_dz) {
 		dz = -dz;
+		//std::cout << box << std::endl;
 	}
 	if (z > max_dz) {
 		dz = -dz;
+		//std::cout << box << std::endl;
 	}
+
+};
+
+void MapTile::print() const {
+	std::cout << "x: " << x << " y: " << y << " z: " << z << std::endl;
+	std::cout << "init_x: " << init_x << " init_y: " << init_y << " init_z: " << init_z << std::endl;
+	std::cout << "max_dx: " << max_dx << " max_dy: " << max_dy << " max_dz: " << max_dz << std::endl;
+	std::cout << "speed: " << speed << std::endl;
+	std::cout << "dx: " << dx << " dy: " << dy << " dz: " << dz << std::endl;
+	std::cout << "type: " << type << std::endl;
+	std::cout << "color: " << color.x << " " << color.y << " " << color.z << std::endl;
 };

@@ -5,7 +5,7 @@
 #include "read_obj.h"
 
 
-struct MapTile{
+struct MapTile {
 	//-------------------------------------------------
 	// 멤버 변수
 	//-------------------------------------------------
@@ -13,11 +13,15 @@ struct MapTile{
 	float y;
 	float z;
 
-	float max_dx;//최대 이동 범위(움직이는 발판일 시)
-	float max_dy;
-	float max_dz;
+	float init_x;
+	float init_y;
+	float init_z;
 
-	float speed; //발판 이동 속도
+	float max_dx{ 2.0f };//최대 이동 범위(움직이는 발판일 시)
+	float max_dy{ 2.0f };
+	float max_dz{ 2.0f };
+
+	float speed{ 0.005f }; //발판 이동 속도
 
 
 	float dx; // 실제 변화량
@@ -42,7 +46,7 @@ struct MapTile{
 	//-------------------------------------------------
 	// 멤버 함수
 	//-------------------------------------------------
-	
+
 	MapTile() = default;
 	MapTile(float, float, float, const char*, const char*, glm::vec3); // x,y,z좌표, 모델, 해당 물체의 타입, 색
 
@@ -54,7 +58,7 @@ struct MapTile{
 	void move_y();
 	void move_z();
 	void handle_collision(); // 인자로 플레이어 클래스 받아오기 충돌시 이 함수 호출
-
+	void print() const;
 };
 
 
