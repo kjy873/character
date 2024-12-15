@@ -66,7 +66,7 @@ float save_z;
 int life{ 3 };//라이프
 
 bool flag_jump{ false };//점프 연속으로 하는거 막기용
-float character_speed{ 0.2 };//디버그용 캐릭터 속도 전환
+float character_speed{ 0.02 };//디버그용 캐릭터 속도 전환
 
 struct COLOR {
 	GLclampf R = 1.0f;
