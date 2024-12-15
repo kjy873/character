@@ -754,6 +754,14 @@ void TimerFunction(int value) {
 				if (mapType == "drops") {
 					m.flag_drop = true;
 				}
+				if (mapType == "goal") {
+
+					save_x = m.init_x;
+					save_y = m.init_y + 0.5;
+					save_z = m.init_z;
+
+					std::cout << save_x << ", " << save_y << ", " << save_z << std::endl;
+				}
 				break;
 			}
 			else mapType = "\0";
@@ -924,18 +932,15 @@ void TimerFunction(int value) {
 		for (auto& d : character) {
 			d.TSR = glm::mat4(1.0f);
 			move(d, glm::vec3(save_x, save_y + 0.5, save_z));
+			
 		}
 		//if (not niddle_hit)
-			--life;
+			//--life;
+			mapType = "\0";
+			std::cout << save_x << ", " << save_y << ", " << save_z << std::endl;
+			
 	}
-	else if (mapType == "goal") {
-		
-		save_x = map1[0].init_x;
-		save_y = map1[0].init_y + 0.5;
-		save_z = map1[0].init_z; 
-		++life;
-		//std::cout << save_x << ", " << save_y << ", " << save_z << std::endl;
-	}
+
 
 	if(life<0)
 		glutLeaveMainLoop();
