@@ -57,6 +57,7 @@ static uniform_real_distribution<> distribution(-1.0, 1.0);
 static uniform_int_distribution<> distribution_diag(1, 6);
 static uniform_real_distribution<> distribution_size(0.05, 0.1);
 
+// 복귀용
 float save_x;
 float save_y{ 0.5 };
 float save_z;
@@ -327,7 +328,7 @@ aabb make_aabb_charactor(const vector<glm::vec3>& vertices) {
 		min_x,
 		max_x,
 
-		min_y = vertices.begin()->y - 0.15,
+		min_y = vertices.begin()->y - 0.3, // 다리가 회전하면서 y값이 변함 -> 충돌 이상, y값 고정
 		max_y,
 
 		min_z,
@@ -357,11 +358,7 @@ glm::vec3 headDirection;
 std::string mapType;
 
 MapTile map1[] = {
-	MapTile(0.0f, 0.0f, 0.0f, "platform.obj", "floor", green_color),//바닥
-	MapTile(0.0f, 0.0f, -4.0f, "platform.obj", "platform_x", red_color),//x축으로 움직이는 발판
-	MapTile(0.0f, 0.0f, -8.0f, "platform.obj", "platform_y", yellow_color),//y축으로 움직이는 발판
-	MapTile(0.0f, 0.0f, -12.0f, "platform.obj", "platform_z", brown_color),//z축으로 움직이는 발판
-	MapTile(0.0f, 0.0f, -18.0f, "platform.obj", "floor", green_color),//바닥
+	MapTile(0.0f, 0.25f, -22.5f, "cube1.obj", "goal", blue_color),//골
 	MapTile(0.0f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
 	MapTile(0.2f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
 	MapTile(0.4f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
@@ -370,11 +367,13 @@ MapTile map1[] = {
 	MapTile(-0.2f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시
 	MapTile(-0.4f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시
 	MapTile(-0.6f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시
-	MapTile(-0.8f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(-0.8f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시	
+	MapTile(0.0f, 0.0f, 0.0f, "platform.obj", "floor", green_color),//바닥
+	MapTile(0.0f, 0.0f, -4.0f, "platform.obj", "platform_x", red_color),//x축으로 움직이는 발판
+	MapTile(0.0f, 0.0f, -8.0f, "platform.obj", "platform_y", yellow_color),//y축으로 움직이는 발판
+	MapTile(0.0f, 0.0f, -12.0f, "platform.obj", "platform_z", brown_color),//z축으로 움직이는 발판
+	MapTile(0.0f, 0.0f, -18.0f, "platform.obj", "floor", green_color),//바닥
 	MapTile(0.0f, 0.0f, -22.0f, "platform.obj", "floor", green_color),//바닥
-
-	MapTile(0.0f, 0.25f, -22.5f, "cube1.obj", "goal", blue_color),//골
-
 };
 
 void main(int argc, char** argv) {
@@ -461,9 +460,9 @@ void init() {
 
 	for (MapTile& map : map1) map.gen_buffer();
 
-	for (auto& map : map1) {
-		cout << "aabb: " << map.get_aabb() <<endl;
-	}
+	//for (auto& map : map1) {
+	//	cout << "aabb: " << map.get_aabb() <<endl;
+	//}
 	
 	glEnable(GL_DEPTH_TEST);
 }
@@ -659,35 +658,36 @@ void TimerFunction(int value) {
 		returnColorRand8());
 
 	// 중력
-	move(boxForCollision, glm::vec3(0.0, -a * 0.2, 0.0));
+	move(boxForCollision, glm::vec3(0.0, -a, 0.0));
 	
 	aabbCharacter = make_aabb_charactor(vector<glm::vec3>(boxForCollision.currentPosition.data(),
 										boxForCollision.currentPosition.data() + boxForCollision.currentPosition.size()));
-	//aabbCharacter.min_y -= 0.1;
+	// make_aabb_character을 두 번 호출해서 y값 보정이 두 번 적용되는거 수정
+	aabbCharacter.min_y += 0.3;
+	
 	for (auto& m : map1) {
 			if (aabb_collision(aabbCharacter, m.get_aabb())) {
 				collision = true;
 				mapType = m.type;
 				break;
 			}
+			else mapType = "\0";
 		}
 	//cout << "collision: " << collision << endl;
 	if (!collision && jumpSpeed <= 0) {
 			for (auto& d : character) {
-				move(d, glm::vec3(0.0, -a/2.0, 0.0));
+				move(d, glm::vec3(0.0, -a, 0.0));
 			}
 		}
-	else move(boxForCollision, glm::vec3(0.0, a*0.2, 0.0));
+	else move(boxForCollision, glm::vec3(0.0, a, 0.0));
 	// 중력
 	if (w == true) {
 		move(boxForCollision, headDirection * 0.02f);
 
 		aabbCharacter = make_aabb_charactor(vector<glm::vec3>(boxForCollision.currentPosition.data(), 
 			boxForCollision.currentPosition.data() + boxForCollision.currentPosition.size()));
-		//aabbCharacter.min_y -= 0.1;
+		aabbCharacter.min_y += 0.3;
 		if (!aabb_collision(aabbCharacter, map1->get_aabb())) {
-			/*glutTimerFunc(10, TimerFunction, 0);
-			return;*/
 
 			for (auto& d : character) {
 				move(d, headDirection * 0.02f);
@@ -737,10 +737,8 @@ void TimerFunction(int value) {
 		move(boxForCollision, -headDirection * 0.02f);
 		aabbCharacter = make_aabb_charactor(vector<glm::vec3>(boxForCollision.currentPosition.data(),
 			boxForCollision.currentPosition.data() + boxForCollision.currentPosition.size()));
-		//aabbCharacter.min_y -= 0.1;
+		aabbCharacter.min_y += 0.3;
 		if (!aabb_collision(aabbCharacter, map1->get_aabb())) {
-			/*glutTimerFunc(10, TimerFunction, 0);
-			return;*/
 
 			for (auto& d : character) {
 				move(d, -headDirection * 0.02f);
@@ -791,6 +789,7 @@ void TimerFunction(int value) {
 		rotateByCenter(boxForCollision, glm::vec3(0.0, 1.0, 0.0), 3.0);
 		aabbCharacter = make_aabb_charactor(vector<glm::vec3>(boxForCollision.currentPosition.data(),
 			boxForCollision.currentPosition.data() + boxForCollision.currentPosition.size()));
+		aabbCharacter.min_y += 0.3;
 		if (!aabb_collision(aabbCharacter, map1->get_aabb())) {
 			/*glutTimerFunc(10, TimerFunction, 0);
 			return;*/
@@ -809,6 +808,7 @@ void TimerFunction(int value) {
 		rotateByCenter(boxForCollision, glm::vec3(0.0, 1.0, 0.0), -3.0);
 		aabbCharacter = make_aabb_charactor(vector<glm::vec3>(boxForCollision.currentPosition.data(),
 			boxForCollision.currentPosition.data() + boxForCollision.currentPosition.size()));
+		aabbCharacter.min_y += 0.3;
 		if (!aabb_collision(aabbCharacter, map1->get_aabb())) {
 			/*glutTimerFunc(10, TimerFunction, 0);
 			return;*/
@@ -834,25 +834,20 @@ void TimerFunction(int value) {
 	// 중력 적용
 	jumpSpeed -= a / 10.0;
 
-	for (int i = 0; i < sizeof(map1) / sizeof(MapTile); ++i) {
-		if (aabb_collision(aabbCharacter, map1[i].get_aabb())) {
-			if (map1[i].type == "niddle")
-				//std::cout << "hit\n";
-				for (auto& d : character) {
-					d.TSR = glm::mat4(1.0f);
-					d.TSR = glm::translate(d.TSR, glm::vec3(save_x, save_y, save_z));
-				}
-			else if (map1[i].type == "goal"){
-				std::cout << "goal\n";
-			
-				save_x = map1[i].init_x;
-				save_y = map1[i].init_y + 0.5;
-				save_z = map1[i].init_z;
-				std::cout << save_x << ", " << save_y << ", " << save_z << std::endl;
-			}
+	cout << "mapType: " << mapType << endl;
+	if (mapType == "niddle") {
+		for (auto& d : character) {
+			d.TSR = glm::mat4(1.0f);
+			move(d, glm::vec3(save_x, save_y + 0.5, save_z));
 		}
 	}
-	
+	else if (mapType == "goal") {
+		std::cout << "goal\n";
+		save_x = map1[0].init_x;
+		save_y = map1[0].init_y + 0.5;
+		save_z = map1[0].init_z;
+		std::cout << save_x << ", " << save_y << ", " << save_z << std::endl;
+	}
 	
 	glutTimerFunc(15, TimerFunction, 0);
 	glutPostRedisplay();
@@ -867,7 +862,9 @@ GLvoid timerMap(int value) {
 		}
 		else if (map.type == "platform_y") {
 			map.move_y();
-			if (mapType == "platform_y") for (auto& d : character) move(d, glm::vec3(0.0, map.dy, 0.0));
+			if (mapType == "platform_y") {
+				for (auto& d : character) move(d, glm::vec3(0.0, map.dy, 0.0));
+			}
 
 		}
 		else if (map.type == "platform_z") {
