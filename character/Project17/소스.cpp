@@ -65,6 +65,8 @@ float save_z;
 
 int life{ 3 };//라이프
 
+bool flag_jump{ false };//점프 연속으로 하는거 막기용
+
 
 struct COLOR {
 	GLclampf R = 1.0f;
@@ -363,7 +365,7 @@ std::string mapType;
 
 MapTile map1[] = {
 	//stage 0
-	MapTile(0.0f, 0.25f, -24.5f, "cube1.obj", "goal", blue_color),//골
+	MapTile(0.0f, 0.0625f, -24.5f, "cube1.obj", "goal", blue_color),//골
 	MapTile(0.0f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
 	MapTile(0.2f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
 	MapTile(0.4f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
@@ -581,7 +583,12 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 		s = true;
 		break;
 	case ' ':  //점프
-		jumpSpeed = 0.5;
+		//if(not flag_jump)
+		{
+			
+			jumpSpeed = 0.5;
+			flag_jump = true;
+		}
 		break;
 	case 'q':
 		glutLeaveMainLoop();
@@ -683,6 +690,7 @@ void TimerFunction(int value) {
 	for (auto& m : map1) {
 			if (aabb_collision(aabbCharacter, m.get_aabb())) {
 				collision = true;
+				flag_jump = false;
 				mapType = m.type;
 				if (mapType == "drops") {
 					m.flag_drop = true;
@@ -852,7 +860,7 @@ void TimerFunction(int value) {
 	// 중력 적용
 	jumpSpeed -= a / 10.0;
 
-	cout << "mapType: " << mapType << endl;
+	//cout << "mapType: " << mapType << endl;
 	if (mapType == "niddle") {
 		for (auto& d : character) {
 			d.TSR = glm::mat4(1.0f);
@@ -866,7 +874,7 @@ void TimerFunction(int value) {
 		save_x = map1[0].init_x;
 		save_y = map1[0].init_y + 0.5;
 		save_z = map1[0].init_z;
-		std::cout << save_x << ", " << save_y << ", " << save_z << std::endl;
+		//std::cout << save_x << ", " << save_y << ", " << save_z << std::endl;
 	}
 
 	if(life<=0)
