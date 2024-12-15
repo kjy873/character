@@ -23,6 +23,7 @@ struct MapTile {
 
 	float speed{ 0.005f }; //발판 이동 속도
 
+	bool flag_drop{ false };//밟으면 떨어지도록
 
 	float dx; // 실제 변화량
 	float dy;

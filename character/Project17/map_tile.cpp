@@ -174,7 +174,11 @@ void MapTile::move_z() {
 };
 
 void MapTile::drop() {
-	y -= speed;
+	if(flag_drop){
+		y -= 2 * speed; 
+		box.max_y -= 2 * speed;
+		box.min_y -= 2 * speed;
+	}
 
 
 }

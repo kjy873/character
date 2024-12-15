@@ -363,7 +363,7 @@ std::string mapType;
 
 MapTile map1[] = {
 	//stage 0
-	MapTile(0.0f, 0.25f, -22.5f, "cube1.obj", "goal", blue_color),//골
+	MapTile(0.0f, 0.25f, -24.5f, "cube1.obj", "goal", blue_color),//골
 	MapTile(0.0f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
 	MapTile(0.2f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
 	MapTile(0.4f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
@@ -373,14 +373,19 @@ MapTile map1[] = {
 	MapTile(-0.4f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시
 	MapTile(-0.6f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시
 	MapTile(-0.8f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시	
+	MapTile(0.0f, 0.0f, -20.0f, "drops.obj", "drops", purple_color),//밟으면 떨어지는 발판
+	MapTile(0.0f, 0.0f, -21.0f, "drops.obj", "drops", purple_color),//밟으면 떨어지는 발판
+	MapTile(0.0f, 0.0f, -22.0f, "drops.obj", "drops", purple_color),//밟으면 떨어지는 발판
 	MapTile(0.0f, 0.0f, 0.0f, "platform.obj", "floor", green_color),//바닥
 	MapTile(0.0f, 0.0f, -4.0f, "platform.obj", "platform_x", red_color),//x축으로 움직이는 발판
 	MapTile(0.0f, 0.0f, -8.0f, "platform.obj", "platform_y", yellow_color),//y축으로 움직이는 발판
 	MapTile(0.0f, 0.0f, -12.0f, "platform.obj", "platform_z", brown_color),//z축으로 움직이는 발판
 	MapTile(0.0f, 0.0f, -18.0f, "platform.obj", "floor", green_color),//바닥
-	MapTile(0.0f, 0.0f, -22.0f, "platform.obj", "floor", green_color),//바닥
+	MapTile(0.0f, 0.0f, -24.0f, "platform.obj", "floor", green_color),//바닥
 
 	//stage1
+
+
 
 	//stage2
 
@@ -679,6 +684,9 @@ void TimerFunction(int value) {
 			if (aabb_collision(aabbCharacter, m.get_aabb())) {
 				collision = true;
 				mapType = m.type;
+				if (mapType == "drops") {
+					m.flag_drop = true;
+				}
 				break;
 			}
 			else mapType = "\0";
@@ -860,6 +868,7 @@ void TimerFunction(int value) {
 		save_z = map1[0].init_z;
 		std::cout << save_x << ", " << save_y << ", " << save_z << std::endl;
 	}
+
 	if(life<=0)
 		glutLeaveMainLoop();
 		
@@ -884,6 +893,9 @@ GLvoid timerMap(int value) {
 		else if (map.type == "platform_z") {
 			map.move_z();
 
+		}
+		else if (map.type == "drops") {
+			map.drop();
 		}
 
 	}
