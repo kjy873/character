@@ -932,11 +932,12 @@ void TimerFunction(int value) {
 		
 		save_x = map1[0].init_x;
 		save_y = map1[0].init_y + 0.5;
-		save_z = map1[0].init_z;
+		save_z = map1[0].init_z; 
+		++life;
 		//std::cout << save_x << ", " << save_y << ", " << save_z << std::endl;
 	}
 
-	if(life<=0)
+	if(life<0)
 		glutLeaveMainLoop();
 		
 	glutTimerFunc(15, TimerFunction, 0);

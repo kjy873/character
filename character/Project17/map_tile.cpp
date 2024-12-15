@@ -73,12 +73,19 @@ void MapTile::gen_buffer() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	glGenBuffers(1, &NBO);
-	glBindBuffer(GL_ARRAY_BUFFER, NBO);
+	glGenBuffers(1, &CBO);
+	glBindBuffer(GL_ARRAY_BUFFER, CBO);
 	glBufferData(GL_ARRAY_BUFFER, color_arr.size() * sizeof(glm::vec3), color_arr.data(), GL_STATIC_DRAW);
 
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(1);
+
+	glGenBuffers(1, &NBO);
+	glBindBuffer(GL_ARRAY_BUFFER, NBO);
+	glBufferData(GL_ARRAY_BUFFER, model.nvectors.size() * sizeof(Normal), model.nvectors.data(), GL_STATIC_DRAW);
+
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(2);
 }
 
 aabb MapTile::get_aabb() {
