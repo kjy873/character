@@ -57,6 +57,10 @@ static uniform_real_distribution<> distribution(-1.0, 1.0);
 static uniform_int_distribution<> distribution_diag(1, 6);
 static uniform_real_distribution<> distribution_size(0.05, 0.1);
 
+float save_x;
+float save_y{ 0.5 };
+float save_z;
+
 struct COLOR {
 	GLclampf R = 1.0f;
 	GLclampf G = 1.0f;
@@ -830,14 +834,18 @@ void TimerFunction(int value) {
 	// 중력 적용
 	jumpSpeed -= a / 10.0;
 
-	//for (int i = 0; i < sizeof(map1) / sizeof(MapTile); ++i) {
-	//	if (aabb_collision(aabbCharacter, map1[i].get_aabb())) {
-	//		if(map1[i].type == "niddle")
-	//			std::cout << "hit\n";
-	//		else if (map1[i].type == "goal")
-	//			std::cout << "goal\n";
-	//	}
-	//}
+	for (int i = 0; i < sizeof(map1) / sizeof(MapTile); ++i) {
+		if (aabb_collision(aabbCharacter, map1[i].get_aabb())) {
+			if(map1[i].type == "niddle")
+				//std::cout << "hit\n";
+				for (auto& d : character) {
+					d.TSR = glm::mat4(1.0f);
+					d.TSR = glm::translate(d.TSR, glm::vec3(save_x, save_y, save_z));
+				}
+			else if (map1[i].type == "goal")
+				std::cout << "goal\n";
+		}
+	}
 	
 	
 	glutTimerFunc(15, TimerFunction, 0);
