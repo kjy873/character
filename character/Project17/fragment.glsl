@@ -2,7 +2,15 @@
 
 in vec3 passColor;
 out vec4 FragColor;
+vec3 lightColor = vec3(1.0f, 1.0f, 1.0f);
 
 void main(){
-	FragColor = vec4(passColor, 1.0f);
+
+	float ambientLight = 0.6;
+
+	vec3 ambient = ambientLight * lightColor;
+
+	vec3 result = ambient * passColor;
+
+	FragColor = vec4(result, 1.0f);
 }

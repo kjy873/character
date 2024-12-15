@@ -58,6 +58,7 @@ static uniform_int_distribution<> distribution_diag(1, 6);
 static uniform_real_distribution<> distribution_size(0.05, 0.1);
 
 // 복귀용
+glm::vec3 initial_save{ 0.0f, 0.5f, 0.0f };
 float save_x;
 float save_y{ 0.5 };
 float save_z;
@@ -135,7 +136,7 @@ void InitBufferTriangle(GLuint& VAO, const glm::vec3* position, int positionSize
 	const glm::vec3* color, int colorSize);
 void InitBufferRectangle(GLuint& VAO, const glm::vec3* position, const int positionSize,
 	const glm::vec3* color, const int colorSize,
-	const int* index, const int indexSize);
+	const int* index, const int indexSize, const glm::vec3* normals, const int normalSize);
 inline GLvoid InitShader(GLuint& programID, GLuint& vertex, const char* vertexName, GLuint& fragment, const char* fragmentName);
 
 // 도형 구조체
@@ -148,6 +149,8 @@ struct diagram {
 	vector<glm::vec3> position;										// 정점 좌표 - 정점의 개수만큼 넣어놨음
 	vector<glm::vec3> currentPosition;								// aabb박스 계산용 변환 누적 위치(정점 좌표)
 	vector<glm::vec3> color;										// 정점 색상 - 정점의 개수만큼 넣어놨음
+	vector<glm::vec3> normals;		
+	vector<glm::vec3> currentNormals;								// 법선 벡터	
 	int vertices = 0;												// 정점 개수
 	bool polyhedron = false;										// 입체 도형 여부
 	vector<int> index;												// EBO를 위한 인덱스
@@ -234,13 +237,23 @@ diagram returnHexahedron(const glm::vec3 center, const float& width, const float
 	dst.position[6] = glm::vec3(dst.center.x + width / 2.0, dst.center.y + height / 2.0, dst.center.z - depth / 2.0);
 	dst.position[7] = glm::vec3(dst.center.x + width / 2.0, dst.center.y - height / 2.0, dst.center.z - depth / 2.0);
 
+	dst.normals.resize(6);
+	dst.normals[0] = glm::vec3(0, 0, -1);
+	dst.normals[1] = glm::vec3(0, 0, 1);
+	dst.normals[2] = glm::vec3(-1, 0, 0);
+	dst.normals[3] = glm::vec3(1, 0, 0);
+	dst.normals[4] = glm::vec3(0, 1, 0);
+	dst.normals[5] = glm::vec3(0, -1, 0);
+
+	dst.currentNormals = dst.normals;
+
 	for (int i = 0; i < dst.currentPosition.size(); i++) {
 		dst.position[i] = glm::vec3(dst.position[i]);
 	}
 
 	InitBufferRectangle(dst.VAO, dst.position.data(), dst.position.size(),
 		dst.color.data(), dst.color.size(),
-		dst.index.data(), dst.index.size());
+		dst.index.data(), dst.index.size(), dst.normals.data(), dst.normals.size());
 
 	return dst;
 }
@@ -250,6 +263,7 @@ inline void move(diagram& dia, glm::vec3 delta) {
 	dia.TSR = glm::translate(glm::mat4(1.0f), delta) * dia.TSR;
 	dia.center = glm::vec3(dia.TSR * glm::vec4(dia.initialCenter, 1.0f));
 	for (int i = 0; i < dia.position.size(); i++) dia.currentPosition[i] = glm::vec3(dia.TSR * glm::vec4(dia.position[i], 1.0f));
+	for (int i = 0; i < dia.currentNormals.size(); i++) dia.currentNormals[i] = glm::vec3(dia.TSR * glm::vec4(dia.normals[i], 1.0f));
 }
 // 자전
 inline void rotateByCenter(diagram& dia, glm::vec3 axis, const float& degree) {
@@ -258,6 +272,7 @@ inline void rotateByCenter(diagram& dia, glm::vec3 axis, const float& degree) {
 	dia.TSR = glm::translate(glm::mat4(1.0f), dia.center) * dia.TSR;
 	dia.center = glm::vec3(dia.TSR * glm::vec4(dia.initialCenter, 1.0f));
 	for (int i = 0; i < dia.position.size(); i++) dia.currentPosition[i] = glm::vec3(dia.TSR * glm::vec4(dia.position[i], 1.0f));
+	for (int i = 0; i < dia.currentNormals.size(); i++) dia.currentNormals[i] = glm::vec3(dia.TSR * glm::vec4(dia.normals[i], 1.0f));
 }
 // 공전
 inline void moveAndRotate(diagram& dia, glm::vec3 axis, glm::vec3 delta, const float& degree) {
@@ -266,6 +281,7 @@ inline void moveAndRotate(diagram& dia, glm::vec3 axis, glm::vec3 delta, const f
 	dia.TSR = glm::translate(glm::mat4(1.0f), dia.center + delta) * dia.TSR;
 	dia.center = glm::vec3(dia.TSR * glm::vec4(dia.initialCenter, 1.0f));
 	for (int i = 0; i < dia.position.size(); i++) dia.currentPosition[i] = glm::vec3(dia.TSR * glm::vec4(dia.position[i], 1.0f));
+	for (int i = 0; i < dia.currentNormals.size(); i++) dia.currentNormals[i] = glm::vec3(dia.TSR * glm::vec4(dia.normals[i], 1.0f));
 }
 // 카메라 공전
 inline void moveAndRotateByMatrix(glm::mat4& TSR, glm::vec3 axis, glm::vec3 center, glm::vec3 moving, const float& degree) {
@@ -293,6 +309,10 @@ glm::vec3 getHeadDirection(const diagram& head) {
 	glm::vec3 direction = glm::normalize(glm::cross(vertex2 - vertex1, vertex4 - vertex3));
 
 	return direction;
+}
+
+glm::vec3 getNormal(const glm::vec3& a, const glm::vec3& b) {
+	return glm::normalize(glm::cross(a, b));
 }
 
 // head가 바라보는 반대 방향(머리 뒤)에 카메라 고정
@@ -434,7 +454,7 @@ MapTile map1[] = {
 
 	//stage2
 
-	MapTile(16.0f, 0.0625f, -58.5f, "cube1.obj", "last", blue_color),//마지막골
+	MapTile(16.0f, 0.0625f, -58.5f, "cube1.obj", "final_goal", blue_color),//골
 
 	MapTile(4.0f, -2.0f, -46.0f, "platform.obj", "platform_x", red_color),//x축으로 움직이는 발판
 	MapTile(10.0f, -2.0f, -46.0f, "platform.obj", "platform_x", red_color),//x축으로 움직이는 발판 59, 방향반전
@@ -652,6 +672,14 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	case 'q':
 		glutLeaveMainLoop();
 		break;
+	case 'g':
+		for (auto& d : character)
+		{
+			d.TSR = glm::mat4(1.0f);
+			move(d, initial_save);
+			move(d, glm::vec3(map1[63].init_x, map1[63].init_y + 0.5, map1[63].init_z));
+		}
+		break;
 	}
 	glutPostRedisplay();
 }
@@ -761,6 +789,11 @@ void TimerFunction(int value) {
 					save_z = m.init_z;
 
 					std::cout << save_x << ", " << save_y << ", " << save_z << std::endl;
+				}
+				if (mapType == "final_goal")
+				{
+					MessageBox(NULL, L"Game Clear", L"Game Clear", MB_OK);
+					glutLeaveMainLoop();
 				}
 				break;
 			}
@@ -935,14 +968,10 @@ void TimerFunction(int value) {
 			
 		}
 		//if (not niddle_hit)
-			--life;
+			//--life;
 			mapType = "\0";
 			std::cout << save_x << ", " << save_y << ", " << save_z << std::endl;
 			
-	}
-	else if (mapType == "last") {
-		MessageBox(NULL, L"Goal!", L"Goal", MB_OK);
-		glutLeaveMainLoop();
 	}
 
 
@@ -1112,9 +1141,9 @@ void InitBufferTriangle(GLuint& VAO, const glm::vec3* position, int positionSize
 }
 void InitBufferRectangle(GLuint& VAO, const glm::vec3* position, const int positionSize,
 	const glm::vec3* color, const int colorSize,
-	const int* index, const int indexSize) {
+	const int* index, const int indexSize, const glm::vec3* normals, const int normalSize) {
 	//cout << "EBO 초기화" << endl;
-	GLuint VBO_position, VBO_color, EBO;
+	GLuint VBO_position, VBO_color, NBO, EBO;
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 
