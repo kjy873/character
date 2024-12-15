@@ -836,14 +836,20 @@ void TimerFunction(int value) {
 
 	for (int i = 0; i < sizeof(map1) / sizeof(MapTile); ++i) {
 		if (aabb_collision(aabbCharacter, map1[i].get_aabb())) {
-			if(map1[i].type == "niddle")
+			if (map1[i].type == "niddle")
 				//std::cout << "hit\n";
 				for (auto& d : character) {
 					d.TSR = glm::mat4(1.0f);
 					d.TSR = glm::translate(d.TSR, glm::vec3(save_x, save_y, save_z));
 				}
-			else if (map1[i].type == "goal")
+			else if (map1[i].type == "goal"){
 				std::cout << "goal\n";
+			
+				save_x = map1[i].init_x;
+				save_y = map1[i].init_y + 0.5;
+				save_z = map1[i].init_z;
+				std::cout << save_x << ", " << save_y << ", " << save_z << std::endl;
+			}
 		}
 	}
 	
