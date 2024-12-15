@@ -5,7 +5,7 @@
 #include<gl/glm/glm.hpp>
 #include<gl/glm/gtc/matrix_transform.hpp>
 #include"file_open.h"
-
+#include"read_obj.h"
 #include"map_tile.h"
 #include"aabb.h";
 #include<string>
@@ -178,3 +178,13 @@ void MapTile::drop() {
 
 
 }
+
+void MapTile::print() const {
+	std::cout << "x: " << x << " y: " << y << " z: " << z << std::endl;
+	std::cout << "init_x: " << init_x << " init_y: " << init_y << " init_z: " << init_z << std::endl;
+	std::cout << "max_dx: " << max_dx << " max_dy: " << max_dy << " max_dz: " << max_dz << std::endl;
+	std::cout << "speed: " << speed << std::endl;
+	std::cout << "dx: " << dx << " dy: " << dy << " dz: " << dz << std::endl;
+	std::cout << "type: " << type << std::endl;
+	std::cout << "color: " << color.x << " " << color.y << " " << color.z << std::endl;
+};

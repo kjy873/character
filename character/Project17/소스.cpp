@@ -267,6 +267,8 @@ inline void scaleByCenter(diagram& dia, glm::vec3 size) {
 	move(dia, -dia.center);
 	dia.TSR = glm::scale(glm::mat4(1.0f), size) * dia.TSR;
 	move(dia, preLocation);
+	dia.center = glm::vec3(dia.TSR * glm::vec4(dia.initialCenter, 1.0f));
+	for (int i = 0; i < dia.position.size(); i++) dia.currentPosition[i] = glm::vec3(dia.TSR * glm::vec4(dia.position[i], 1.0f));
 }
 
 // head가 바라보는 방향, 법선벡터 구하기
@@ -321,7 +323,7 @@ aabb make_aabb_charactor(const vector<glm::vec3>& vertices) {
 		min_x,
 		max_x,
 
-		min_y,
+		min_y = vertices.begin()->y - 0.3,
 		max_y,
 
 		min_z,
@@ -366,6 +368,7 @@ MapTile map1[] = {
 	MapTile(0.0f, 0.0f, -22.0f, "platform.obj", "floor", green_color),//바닥
 
 	MapTile(0.0f, 0.25f, -22.5f, "cube1.obj", "goal", blue_color),//골
+
 };
 
 void main(int argc, char** argv) {
@@ -451,6 +454,10 @@ void init() {
 	view = glm::lookAt(camera[0], camera[1], camera[2]);
 
 	for (MapTile& map : map1) map.gen_buffer();
+
+	for (auto& map : map1) {
+		cout << "aabb: " << map.get_aabb() <<endl;
+	}
 	
 	glEnable(GL_DEPTH_TEST);
 }
@@ -527,13 +534,9 @@ GLvoid drawScene() {
 	drawWireframe(boxForCollision);
 
 	GLuint trans_mat = glGetUniformLocation(shaderProgramID, "modelTransform");
-	GLuint color = glGetUniformLocation(shaderProgramID, "in_color");
+	GLuint color = glGetUniformLocation(shaderProgramID, "vColor");
 
-	/*glBindVertexArray(map1[3].VAO);
-	map1[3].update_position();
-	glUniform3fv(color, 1, glm::value_ptr(map1[3].color));
-	glUniformMatrix4fv(trans_mat, 1, GL_FALSE, glm::value_ptr(map1[3].trans));
-	glDrawArrays(GL_TRIANGLES, 0, map1[3].model.vertices.size());*/
+	
 	for (MapTile w : map1) {
 		glBindVertexArray(w.VAO);
 		w.update_position();
@@ -566,52 +569,7 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	}
 	glutPostRedisplay();
 }
-//GLvoid Keyboard(unsigned char key, int x, int y) {
-//	switch (key) {
-//
-//	case 'w':
-//		camera_z += 0.5f;
-//		break;
-//
-//	case 's':
-//		camera_z -= 0.5f;
-//		break;
-//
-//	case 'y':
-//		camera_angle += 1.0;
-//		break;
-//
-//	case 'Y':
-//		camera_angle -= 1.0;
-//		break;
-//
-//	case 'a':
-//		camera_x += 0.5f;
-//		break;
-//
-//	case 'd':
-//		camera_x -= 0.5f;
-//		break;
-//
-//	case ' ':
-//		camera_y -= 0.5f;
-//		break;
-//
-//	case 'c':
-//		camera_y += 0.5f;
-//		break;
-//
-//	case 'q':
-//		glutLeaveMainLoop();
-//		break;
-//
-//		break;
-//	}
-//
-//
-//
-//	glutPostRedisplay();
-//}
+
 GLvoid KeyboardUp(unsigned char key, int x, int y) {
 	switch (key) {
 	case 'w':
@@ -675,6 +633,7 @@ void motion(int x, int y) {
 
 void TimerFunction(int value) {
 	glm::vec3 headDirection = -getHeadDirection(character[1]);
+	bool collision = false;
 	// 캐릭터의 64개 정점을 모두 모아서 aabb박스를 계산
 	
 	//if (w == true || s == true || turnL == true || turnR == true) {
@@ -692,23 +651,23 @@ void TimerFunction(int value) {
 			aabbCharacter.max_y - aabbCharacter.min_y,
 			aabbCharacter.max_z - aabbCharacter.min_z,
 			returnColorRand8());
-	//}
-	/*if (aabb_collision(aabbCharacter, map1->get_aabb())) {
-		for (auto& d : character) {
-			move(d, -headDirection * 0.02f);
-		}
-		glutTimerFunc(10, TimerFunction, 0);
-		return;
-	}*/
+
 		// 중력
-		move(boxForCollision, glm::vec3(0.0, -a, 0.0));
+		move(boxForCollision, glm::vec3(0.0, -a/2.0, 0.0));
 		
 		aabbCharacter = make_aabb_charactor(vector<glm::vec3>(boxForCollision.currentPosition.data(),
 			boxForCollision.currentPosition.data() + boxForCollision.currentPosition.size()));
 		//aabbCharacter.min_y -= 0.1;
-		if (!aabb_collision(aabbCharacter, map1->get_aabb()) && jumpSpeed <= 0) {
+		for (auto& m : map1) {
+			if (aabb_collision(aabbCharacter, m.get_aabb())) {
+				collision = true;
+				break;
+			}
+		}
+		//cout << "collision: " << collision << endl;
+		if (!collision && jumpSpeed <= 0) {
 			for (auto& d : character) {
-				move(d, glm::vec3(0.0, -a, 0.0));
+				move(d, glm::vec3(0.0, -a/2.0, 0.0));
 			}
 		}
 		else move(boxForCollision, glm::vec3(0.0, a, 0.0));
@@ -867,30 +826,14 @@ void TimerFunction(int value) {
 	}
 	// 중력 적용
 	jumpSpeed -= a / 10.0;
-	
+
 	for (int i = 0; i < sizeof(map1) / sizeof(MapTile); ++i) {
 		if (aabb_collision(aabbCharacter, map1[i].get_aabb())) {
 			std::cout << "ya\n";
 		}
 	}
-
-
 	
-	//else jumpSpeed = 0;
-	//v += a / 100.0;
-	//move(boxForCollision, glm::vec3(0.0, -v, 0.0));
-	//aabbCharacter = make_aabb_charactor(vector<glm::vec3>(boxForCollision.currentPosition.data(),
-	//	boxForCollision.currentPosition.data() + boxForCollision.currentPosition.size()));
-	//if (!aabb_collision(aabbCharacter, map1->get_aabb())) {
-	//	//v = 0;
-	//	//(10, TimerFunction, 0);
-	//	//return;
-	//	for (auto& d : character) {
-	//		move(d, glm::vec3(0.0, -v, 0.0));
-	//	}
-	//}
-	//else v = 0;
-	// 중력 적용
+	
 	glutTimerFunc(15, TimerFunction, 0);
 	glutPostRedisplay();
 }

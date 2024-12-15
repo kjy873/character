@@ -1,7 +1,8 @@
 #pragma once
-#include"read_obj.h"
+
 #include"aabb.h";
 #include<string>
+#include "read_obj.h"
 
 
 struct MapTile {
@@ -59,7 +60,8 @@ struct MapTile {
 	void move_z();
 	void drop();
 	void handle_collision(); // 인자로 플레이어 클래스 받아오기 충돌시 이 함수 호출
-
+	void print() const;
 };
+
 
 
