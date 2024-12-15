@@ -512,15 +512,15 @@ inline void drawWireframe(const diagram& dia) {
 GLvoid drawScene() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	draw(axes);
-	//setCameraToHead(view, camera, character[1]);
+	setCameraToHead(view, camera, character[1]);
 
-	glm::vec3 camera_pos(0.0f, 0.0f, 0.0f);
+	/*glm::vec3 camera_pos(0.0f, 0.0f, 0.0f);
 	glm::vec3 camera_target(0.0, 0.0, -1.0);
 	glm::vec3 camera_up(0.0f, 1.0f, 0.0f);
 	view = glm::lookAt(camera_pos, camera_target, camera_up);
 
 	view = glm::translate(view, glm::vec3(camera_x, camera_y, camera_z - 25.0f));
-	view = glm::rotate(view, glm::radians(camera_angle), glm::vec3(0.0f, 1.0f, 0.0f));
+	view = glm::rotate(view, glm::radians(camera_angle), glm::vec3(0.0f, 1.0f, 0.0f));*/
 	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "viewTransform");
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
 
@@ -830,11 +830,14 @@ void TimerFunction(int value) {
 	// 중력 적용
 	jumpSpeed -= a / 10.0;
 
-	/*for (int i = 0; i < sizeof(map1) / sizeof(MapTile); ++i) {
-		if (aabb_collision(aabbCharacter, map1[i].get_aabb())) {
-			std::cout << "ya\n";
-		}
-	}*/
+	//for (int i = 0; i < sizeof(map1) / sizeof(MapTile); ++i) {
+	//	if (aabb_collision(aabbCharacter, map1[i].get_aabb())) {
+	//		if(map1[i].type == "niddle")
+	//			std::cout << "hit\n";
+	//		else if (map1[i].type == "goal")
+	//			std::cout << "goal\n";
+	//	}
+	//}
 	
 	
 	glutTimerFunc(15, TimerFunction, 0);
