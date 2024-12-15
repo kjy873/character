@@ -66,7 +66,7 @@ float save_z;
 int life{ 3 };//라이프
 
 bool flag_jump{ false };//점프 연속으로 하는거 막기용
-
+float character_speed{ 0.2 };//디버그용 캐릭터 속도 전환
 
 struct COLOR {
 	GLclampf R = 1.0f;
@@ -365,6 +365,8 @@ std::string mapType;
 
 MapTile map1[] = {
 	//stage 0
+	MapTile(0.0f, -15.0f, -50.0f, "plane.obj", "niddle", sky_color),//맨 아래
+	MapTile(0.0f, -15.0f, 50.0f, "plane.obj", "niddle", sky_color),//맨 아래
 	MapTile(0.0f, 0.0625f, -24.5f, "cube1.obj", "goal", blue_color),//골
 	MapTile(0.0f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
 	MapTile(0.2f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
@@ -387,10 +389,59 @@ MapTile map1[] = {
 
 	//stage1
 
+	MapTile(-0.8f, 4.2f, -42.0f, "niddle.obj", "niddle", red_color),//가시	
+	MapTile(-0.6f, 4.2f, -42.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(-0.4f, 4.2f, -42.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(-0.2f, 4.2f, -42.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.0f, 4.2f, -42.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.8f, 4.2f, -42.0f, "niddle.obj", "niddle", red_color),//가시	
+	MapTile(0.6f, 4.2f, -42.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.4f, 4.2f, -42.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.2f, 4.2f, -42.0f, "niddle.obj", "niddle", red_color),//가시
+
+	MapTile(-0.8f, 4.2f, -39.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(-0.6f, 4.2f, -39.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(-0.4f, 4.2f, -39.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(-0.2f, 4.2f, -39.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.0f, 4.2f, -39.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.8f, 4.2f, -39.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.6f, 4.2f, -39.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.4f, 4.2f, -39.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.2f, 4.2f, -39.0f, "niddle.obj", "niddle", red_color),//가시
+
+	MapTile(-0.8f, 4.2f, -36.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(-0.6f, 4.2f, -36.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(-0.4f, 4.2f, -36.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(-0.2f, 4.2f, -36.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.0f, 4.2f, -36.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.8f, 4.2f, -36.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.6f, 4.2f, -36.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.4f, 4.2f, -36.0f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.2f, 4.2f, -36.0f, "niddle.obj", "niddle", red_color),//가시
+
+	MapTile(0.0f, -2.0625f, -46.5f, "cube1.obj", "goal", blue_color),//골
+
+	MapTile(0.0f, 0.0f, -28.0f, "platform.obj", "floor", green_color),//바닥
+	MapTile(0.0f, 1.0f, -31.0f, "drops.obj", "drops", purple_color),//밟으면 떨어지는 발판
+	MapTile(0.0f, 2.0f, -32.0f, "drops.obj", "drops", purple_color),//밟으면 떨어지는 발판
+	MapTile(0.0f, 3.0f, -33.0f, "drops.obj", "drops", purple_color),//밟으면 떨어지는 발판
+	MapTile(0.0f, 4.0f, -36.0f, "platform.obj", "floor", green_color),//바닥
+	MapTile(0.0f, 4.0f, -39.0f, "platform.obj", "floor", green_color),//바닥
+	MapTile(0.0f, 4.0f, -42.0f, "platform.obj", "floor", green_color),//바닥
+	MapTile(0.0f, -2.0f, -46.0f, "platform.obj", "floor", green_color),//바닥
+	
 
 
 	//stage2
 
+	MapTile(16.0f, 0.0625f, -58.5f, "cube1.obj", "goal", blue_color),//골
+
+	MapTile(4.0f, -2.0f, -46.0f, "platform.obj", "platform_x", red_color),//x축으로 움직이는 발판
+	MapTile(10.0f, -2.0f, -46.0f, "platform.obj", "platform_x", red_color),//x축으로 움직이는 발판 59, 방향반전
+	MapTile(16.0f, -2.0f, -46.0f, "platform.obj", "platform_x", red_color),//x축으로 움직이는 발판
+	MapTile(16.0f, -2.0f, -50.0f, "platform.obj", "platform_y", yellow_color),//y축으로 움직이는 발판
+	MapTile(16.0f, -2.0f, -54.0f, "platform.obj", "platform_y", yellow_color),//y축으로 움직이는 발판 62 방향반전
+	MapTile(16.0f, 0.0f, -58.0f, "platform.obj", "floor", green_color),//바닥
 };
 
 void main(int argc, char** argv) {
@@ -481,6 +532,8 @@ void init() {
 	//	cout << "aabb: " << map.get_aabb() <<endl;
 	//}
 	
+	map1[59].dx = -map1[59].speed;
+	map1[62].dy = -map1[62].speed;
 	glEnable(GL_DEPTH_TEST);
 }
 
@@ -583,12 +636,18 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 		s = true;
 		break;
 	case ' ':  //점프
-		//if(not flag_jump)
+		if(not flag_jump)//디버그할땐 이 줄 주석처리 하면 무한점프 가능
 		{
 			
 			jumpSpeed = 0.5;
 			flag_jump = true;
 		}
+		break;
+	case 'c':
+		character_speed = 0.02f;
+		break;
+	case 'v':
+		character_speed = 0.2f;
 		break;
 	case 'q':
 		glutLeaveMainLoop();
@@ -716,7 +775,7 @@ void TimerFunction(int value) {
 		if (!aabb_collision(aabbCharacter, map1->get_aabb())) {
 
 			for (auto& d : character) {
-				move(d, headDirection * 0.02f);
+				move(d, headDirection * character_speed);
 			}
 
 			if (swingLimbs) {
