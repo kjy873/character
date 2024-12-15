@@ -434,7 +434,7 @@ MapTile map1[] = {
 
 	//stage2
 
-	MapTile(16.0f, 0.0625f, -58.5f, "cube1.obj", "goal", blue_color),//골
+	MapTile(16.0f, 0.0625f, -58.5f, "cube1.obj", "last", blue_color),//마지막골
 
 	MapTile(4.0f, -2.0f, -46.0f, "platform.obj", "platform_x", red_color),//x축으로 움직이는 발판
 	MapTile(10.0f, -2.0f, -46.0f, "platform.obj", "platform_x", red_color),//x축으로 움직이는 발판 59, 방향반전
@@ -935,10 +935,14 @@ void TimerFunction(int value) {
 			
 		}
 		//if (not niddle_hit)
-			//--life;
+			--life;
 			mapType = "\0";
 			std::cout << save_x << ", " << save_y << ", " << save_z << std::endl;
 			
+	}
+	else if (mapType == "last") {
+		MessageBox(NULL, L"Goal!", L"Goal", MB_OK);
+		glutLeaveMainLoop();
 	}
 
 
