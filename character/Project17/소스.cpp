@@ -353,17 +353,19 @@ MapTile map1[] = {
 	MapTile(0.0f, 0.0f, -4.0f, "platform.obj", "platform_x", red_color),//x축으로 움직이는 발판
 	MapTile(0.0f, 0.0f, -8.0f, "platform.obj", "platform_y", yellow_color),//y축으로 움직이는 발판
 	MapTile(0.0f, 0.0f, -12.0f, "platform.obj", "platform_z", brown_color),//z축으로 움직이는 발판
-	MapTile(0.0f, 0.0f, -16.0f, "platform.obj", "floor", green_color),//바닥
-	MapTile(0.0f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시
-	MapTile(0.2f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시
-	MapTile(0.4f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시
-	MapTile(0.6f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시
-	MapTile(0.8f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시
-	MapTile(-0.2f, 0.2f, -14.6f, "niddle.obj", "niddle", red_color),//가시
-	MapTile(-0.4f, 0.2f, -14.6f, "niddle.obj", "niddle", red_color),//가시
-	MapTile(-0.6f, 0.2f, -14.6f, "niddle.obj", "niddle", red_color),//가시
-	MapTile(-0.8f, 0.2f, -14.6f, "niddle.obj", "niddle", red_color),//가시
-	MapTile(0.0f, 0.0f, -20.0f, "platform.obj", "floor", green_color),//바닥
+	MapTile(0.0f, 0.0f, -18.0f, "platform.obj", "floor", green_color),//바닥
+	MapTile(0.0f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.2f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.4f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.6f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.8f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(-0.2f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(-0.4f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(-0.6f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(-0.8f, 0.2f, -16.6f, "niddle.obj", "niddle", red_color),//가시
+	MapTile(0.0f, 0.0f, -22.0f, "platform.obj", "floor", green_color),//바닥
+
+	MapTile(0.0f, 0.25f, -22.5f, "cube1.obj", "goal", blue_color),//골
 };
 
 void main(int argc, char** argv) {
@@ -866,6 +868,13 @@ void TimerFunction(int value) {
 	// 중력 적용
 	jumpSpeed -= a / 10.0;
 	
+	for (int i = 0; i < sizeof(map1) / sizeof(MapTile); ++i) {
+		if (aabb_collision(aabbCharacter, map1[i].get_aabb())) {
+			std::cout << "ya\n";
+		}
+	}
+
+
 	
 	//else jumpSpeed = 0;
 	//v += a / 100.0;

@@ -1,8 +1,7 @@
 #pragma once
-
+#include"read_obj.h"
 #include"aabb.h";
 #include<string>
-#include "read_obj.h"
 
 
 struct MapTile {
@@ -32,7 +31,7 @@ struct MapTile {
 
 	aabb box;
 
-	GLuint VAO, VBO, NBO;
+	GLuint VAO, VBO, NBO, CBO;
 
 	std::string type; //floor, platform, niddle, coin, niddle과 충돌시 구 하나 감소, coin과 접촉 시엔 스코어 증가
 
@@ -40,6 +39,7 @@ struct MapTile {
 
 	glm::vec3 color; // 색상, 텍스처 등은 이후 gl수업 진도에 따라 로직 추가하겠습니다.
 
+	std::vector<glm::vec3> color_arr;
 
 
 
@@ -57,8 +57,9 @@ struct MapTile {
 	void move_x();
 	void move_y();
 	void move_z();
+	void drop();
 	void handle_collision(); // 인자로 플레이어 클래스 받아오기 충돌시 이 함수 호출
-	void print() const;
+
 };
 
 
