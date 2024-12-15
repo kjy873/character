@@ -98,11 +98,6 @@ glm::vec3* returnColorRand8() {
 	for (int i = 0; i < 8; i++) color[i] = glm::vec3((float)(rand() % 256 + 1) / 255, (float)(rand() % 256 + 1) / 255, (float)(rand() % 256 + 1) / 255);
 	return color;
 }
-glm::vec3* returnColor8(const glm::vec3 c) {
-	glm::vec3 color[8];
-	for (int i = 0; i < 8; i++) color[i] = c;
-	return color;
-}
 COLOR backgroundColor{ 0.0f, 0.0f, 0.0f, 0.0f };
 
 struct mouseLocationGL {
@@ -521,7 +516,7 @@ void init() {
 	delete(temp);
 
 	diagram* part = new diagram(8);
-	*part = returnHexahedron(glm::vec3(0.0, 0.0, 0.0), 0.2, 0.3, 0.1, returnColor8(white_color));
+	*part = returnHexahedron(glm::vec3(0.0, 0.0, 0.0), 0.2, 0.3, 0.1, returnColorRand8());
 	character.push_back(*part);
 	*part = returnHexahedron(glm::vec3(0.0, 0.2, 0.0), 0.1, 0.1, 0.1, returnColorRand8());
 	character.push_back(*part);
@@ -552,6 +547,10 @@ void init() {
 	view = glm::lookAt(camera[0], camera[1], camera[2]);
 
 	for (MapTile& map : map1) map.gen_buffer();
+
+	//for (auto& map : map1) {
+	//	cout << "aabb: " << map.get_aabb() <<endl;
+	//}
 	
 	map1[59].dx = -map1[59].speed;
 	map1[62].dy = -map1[62].speed;
