@@ -323,7 +323,7 @@ aabb make_aabb_charactor(const vector<glm::vec3>& vertices) {
 		min_x,
 		max_x,
 
-		min_y = vertices.begin()->y - 0.3,
+		min_y = vertices.begin()->y - 0.15,
 		max_y,
 
 		min_z,
@@ -349,6 +349,8 @@ vector<glm::vec3> verticesForAABB(0);
 vector <diagram> axes;
 glm::vec3 camera[3];
 aabb aabbCharacter;
+glm::vec3 headDirection;
+std::string mapType;
 
 MapTile map1[] = {
 	MapTile(0.0f, 0.0f, 0.0f, "platform.obj", "floor", green_color),//바닥
@@ -510,15 +512,15 @@ inline void drawWireframe(const diagram& dia) {
 GLvoid drawScene() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	draw(axes);
-	setCameraToHead(view, camera, character[1]);
+	//setCameraToHead(view, camera, character[1]);
 
-	/*glm::vec3 camera_pos(0.0f, 0.0f, 0.0f);
+	glm::vec3 camera_pos(0.0f, 0.0f, 0.0f);
 	glm::vec3 camera_target(0.0, 0.0, -1.0);
 	glm::vec3 camera_up(0.0f, 1.0f, 0.0f);
 	view = glm::lookAt(camera_pos, camera_target, camera_up);
 
 	view = glm::translate(view, glm::vec3(camera_x, camera_y, camera_z - 25.0f));
-	view = glm::rotate(view, glm::radians(camera_angle), glm::vec3(0.0f, 1.0f, 0.0f));*/
+	view = glm::rotate(view, glm::radians(camera_angle), glm::vec3(0.0f, 1.0f, 0.0f));
 	unsigned int viewLocation = glGetUniformLocation(shaderProgramID, "viewTransform");
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
 
@@ -632,46 +634,47 @@ void motion(int x, int y) {
 }
 
 void TimerFunction(int value) {
-	glm::vec3 headDirection = -getHeadDirection(character[1]);
+	headDirection = -getHeadDirection(character[1]);
 	bool collision = false;
 	// 캐릭터의 64개 정점을 모두 모아서 aabb박스를 계산
 	
 	//if (w == true || s == true || turnL == true || turnR == true) {
-		verticesForAABB.clear();
-		for (const auto& d : character) {
+	verticesForAABB.clear();
+	for (const auto& d : character) {
 			verticesForAABB.insert(verticesForAABB.end(), d.currentPosition.begin(), d.currentPosition.end());
 		}
-		aabbCharacter = make_aabb_charactor(verticesForAABB);
+	aabbCharacter = make_aabb_charactor(verticesForAABB);
 
-		// aabb박스 그리기용 정육면체
-		boxForCollision = returnHexahedron(glm::vec3(aabbCharacter.min_x + (aabbCharacter.max_x - aabbCharacter.min_x) / 2.0,
-			aabbCharacter.min_y + (aabbCharacter.max_y - aabbCharacter.min_y) / 2.0,
-			aabbCharacter.min_z + (aabbCharacter.max_z - aabbCharacter.min_z) / 2.0),
-			aabbCharacter.max_x - aabbCharacter.min_x,
-			aabbCharacter.max_y - aabbCharacter.min_y,
-			aabbCharacter.max_z - aabbCharacter.min_z,
-			returnColorRand8());
+	// aabb박스 그리기용 정육면체
+	boxForCollision = returnHexahedron(glm::vec3(aabbCharacter.min_x + (aabbCharacter.max_x - aabbCharacter.min_x) / 2.0,
+		aabbCharacter.min_y + (aabbCharacter.max_y - aabbCharacter.min_y) / 2.0,
+		aabbCharacter.min_z + (aabbCharacter.max_z - aabbCharacter.min_z) / 2.0),
+		aabbCharacter.max_x - aabbCharacter.min_x,
+		aabbCharacter.max_y - aabbCharacter.min_y,
+		aabbCharacter.max_z - aabbCharacter.min_z,
+		returnColorRand8());
 
-		// 중력
-		move(boxForCollision, glm::vec3(0.0, -a/2.0, 0.0));
-		
-		aabbCharacter = make_aabb_charactor(vector<glm::vec3>(boxForCollision.currentPosition.data(),
-			boxForCollision.currentPosition.data() + boxForCollision.currentPosition.size()));
-		//aabbCharacter.min_y -= 0.1;
-		for (auto& m : map1) {
+	// 중력
+	move(boxForCollision, glm::vec3(0.0, -a * 0.2, 0.0));
+	
+	aabbCharacter = make_aabb_charactor(vector<glm::vec3>(boxForCollision.currentPosition.data(),
+										boxForCollision.currentPosition.data() + boxForCollision.currentPosition.size()));
+	//aabbCharacter.min_y -= 0.1;
+	for (auto& m : map1) {
 			if (aabb_collision(aabbCharacter, m.get_aabb())) {
 				collision = true;
+				mapType = m.type;
 				break;
 			}
 		}
-		//cout << "collision: " << collision << endl;
-		if (!collision && jumpSpeed <= 0) {
+	//cout << "collision: " << collision << endl;
+	if (!collision && jumpSpeed <= 0) {
 			for (auto& d : character) {
 				move(d, glm::vec3(0.0, -a/2.0, 0.0));
 			}
 		}
-		else move(boxForCollision, glm::vec3(0.0, a, 0.0));
-		// 중력
+	else move(boxForCollision, glm::vec3(0.0, a*0.2, 0.0));
+	// 중력
 	if (w == true) {
 		move(boxForCollision, headDirection * 0.02f);
 
@@ -827,11 +830,11 @@ void TimerFunction(int value) {
 	// 중력 적용
 	jumpSpeed -= a / 10.0;
 
-	for (int i = 0; i < sizeof(map1) / sizeof(MapTile); ++i) {
+	/*for (int i = 0; i < sizeof(map1) / sizeof(MapTile); ++i) {
 		if (aabb_collision(aabbCharacter, map1[i].get_aabb())) {
 			std::cout << "ya\n";
 		}
-	}
+	}*/
 	
 	
 	glutTimerFunc(15, TimerFunction, 0);
@@ -847,6 +850,7 @@ GLvoid timerMap(int value) {
 		}
 		else if (map.type == "platform_y") {
 			map.move_y();
+			if (mapType == "platform_y") for (auto& d : character) move(d, glm::vec3(0.0, map.dy, 0.0));
 
 		}
 		else if (map.type == "platform_z") {
