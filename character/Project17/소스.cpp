@@ -62,6 +62,10 @@ float save_x;
 float save_y{ 0.5 };
 float save_z;
 
+
+int life{ 3 };//라이프
+
+
 struct COLOR {
 	GLclampf R = 1.0f;
 	GLclampf G = 1.0f;
@@ -358,6 +362,7 @@ glm::vec3 headDirection;
 std::string mapType;
 
 MapTile map1[] = {
+	//stage 0
 	MapTile(0.0f, 0.25f, -22.5f, "cube1.obj", "goal", blue_color),//골
 	MapTile(0.0f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
 	MapTile(0.2f, 0.2f, -18.6f, "niddle.obj", "niddle", red_color),//가시
@@ -374,6 +379,11 @@ MapTile map1[] = {
 	MapTile(0.0f, 0.0f, -12.0f, "platform.obj", "platform_z", brown_color),//z축으로 움직이는 발판
 	MapTile(0.0f, 0.0f, -18.0f, "platform.obj", "floor", green_color),//바닥
 	MapTile(0.0f, 0.0f, -22.0f, "platform.obj", "floor", green_color),//바닥
+
+	//stage1
+
+	//stage2
+
 };
 
 void main(int argc, char** argv) {
@@ -840,15 +850,19 @@ void TimerFunction(int value) {
 			d.TSR = glm::mat4(1.0f);
 			move(d, glm::vec3(save_x, save_y + 0.5, save_z));
 		}
+		//if (not niddle_hit)
+			--life;
 	}
 	else if (mapType == "goal") {
-		std::cout << "goal\n";
+		
 		save_x = map1[0].init_x;
 		save_y = map1[0].init_y + 0.5;
 		save_z = map1[0].init_z;
 		std::cout << save_x << ", " << save_y << ", " << save_z << std::endl;
 	}
-	
+	if(life<=0)
+		glutLeaveMainLoop();
+		
 	glutTimerFunc(15, TimerFunction, 0);
 	glutPostRedisplay();
 }
